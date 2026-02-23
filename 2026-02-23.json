@@ -1,0 +1,165 @@
+{
+  "date": "2026-02-23",
+  "todos": [
+    {
+      "id": 1771565892439,
+      "text": "Trav follow up",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-19T00:00:00Z"
+    },
+    {
+      "id": 1771565758003,
+      "text": "EVP event follow up",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-19T00:00:00Z"
+    },
+    {
+      "id": 1771564608730,
+      "text": "brand strategy Newski",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-19T00:00:00Z"
+    },
+    {
+      "id": 1771483597960,
+      "text": "Kick slack icon",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-18T00:00:00Z"
+    },
+    {
+      "id": 1771481671549,
+      "text": "table for Jules",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-18T00:00:00Z"
+    },
+    {
+      "id": 1771467785924,
+      "text": "Brand scoping document?",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-18T00:00:00Z"
+    },
+    {
+      "id": 1771467766346,
+      "text": "OOS documentation",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-18T00:00:00Z"
+    },
+    {
+      "id": 1771467715924,
+      "text": "KB work",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-18T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "text": "Get access to Creatopy",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-18T00:00:00Z"
+    },
+    {
+      "id": 6,
+      "text": "Stake tier 2 visuals",
+      "urgency": 3,
+      "completed": false,
+      "project": "stake-object-style",
+      "timestamp": "2026-02-18T00:00:00Z"
+    },
+    {
+      "id": 3002,
+      "text": "Marketing roadmap from Abi (early next week)",
+      "urgency": 2,
+      "completed": false,
+      "timestamp": "2026-02-24T00:00:00Z"
+    },
+    {
+      "id": 5000,
+      "text": "Julia's going away party - Sunday March 1",
+      "urgency": 1,
+      "completed": false,
+      "timestamp": "2026-03-01T00:00:00Z"
+    }
+  ],
+  "notes": [
+    {
+      "id": 1708700000001,
+      "text": "Leo seemed really happy with the Object Style direction at lunch yesterday",
+      "project": "stake-object-style",
+      "people": ["leo"],
+      "timestamp": "2026-02-20T12:00:00Z"
+    },
+    {
+      "id": 1708700000002,
+      "text": "Ben + Will breakthrough is locked - 2D motion on 3D assets is genuinely ownable",
+      "project": "stake-object-style",
+      "people": ["ben", "will"],
+      "timestamp": "2026-02-22T15:00:00Z"
+    },
+    {
+      "id": 1708700000003,
+      "text": "Hackathon pushed to Aug 4 - need to update all timelines",
+      "project": "kick-hackathon",
+      "timestamp": "2026-02-21T10:00:00Z"
+    },
+    {
+      "id": 1708700000004,
+      "text": "Maxim has some frustration with Jules - worth a conversation with Shab",
+      "people": ["maxim", "jules", "shab"],
+      "timestamp": "2026-02-22T14:00:00Z"
+    }
+  ],
+  "wins": [
+    {
+      "id": 1708700000101,
+      "text": "Tier 1 locked and approved by Leo",
+      "impact": "Major milestone for Object Style project",
+      "project": "stake-object-style",
+      "timestamp": "2026-02-22T16:00:00Z"
+    },
+    {
+      "id": 1708700000102,
+      "text": "Ben smashed Moles video ahead of schedule",
+      "impact": "Stakeholder confidence, team momentum",
+      "people": ["ben"],
+      "timestamp": "2026-02-22T17:00:00Z"
+    },
+    {
+      "id": 1708700000103,
+      "text": "Challenges video delivered and approved",
+      "impact": "Ready to post, social team has templates",
+      "project": "stake-challenges",
+      "people": ["kiady"],
+      "timestamp": "2026-02-21T15:00:00Z"
+    }
+  ],
+  "decisions": [
+    {
+      "id": 1708700000201,
+      "text": "Moving Zach back to brand work from Moon",
+      "rationale": "Moon requests were sitting in Notion without team knowing. Zach needs to own stakeholder management.",
+      "people": ["zach"],
+      "timestamp": "2026-02-19T11:00:00Z"
+    },
+    {
+      "id": 1708700000202,
+      "text": "SOG video work going to Kiady or Ben going forward",
+      "rationale": "Better alignment needed. Max was blocked all week on Plinko.",
+      "project": "stake-originals-sog",
+      "people": ["kiady", "ben", "max"],
+      "timestamp": "2026-02-21T13:00:00Z"
+    },
+    {
+      "id": 1708700000203,
+      "text": "Ticket allocation must sit with Eamon",
+      "rationale": "Process fix to prevent backlog chaos",
+      "timestamp": "2026-02-19T09:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Capture</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #e5e5e5;
+      --text-dim: #a0a0a0;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --urgent: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1rem 5rem;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .status {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-dim);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .status-dot.online {
+      background: var(--success);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Quick Capture */
+    .quick-capture {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .capture-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: 1rem;
+      padding: 0.5rem 0;
+      outline: none;
+      resize: none;
+      min-height: 60px;
+      font-family: inherit;
+    }
+
+    .capture-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .capture-types {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .type-btn {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .type-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .type-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .capture-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Today's View */
+    .section {
+      margin: 2rem 0;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .section-count {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+    }
+
+    .item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .item-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 0.125rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .item-checkbox:hover {
+      border-color: var(--accent);
+    }
+
+    .item-checkbox.checked {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .item-checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 0.875rem;
+    }
+
+    .item-content {
+      flex: 1;
+    }
+
+    .item-text {
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 0.25rem;
+    }
+
+    .item-text.completed {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .item-meta {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+    }
+
+    .item-tag {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--bg);
+    }
+
+    .urgency-1 { color: var(--text-dim); }
+    .urgency-2 { color: var(--warning); }
+    .urgency-3 { color: var(--urgent); }
+
+    /* Empty State */
+    .empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-dim);
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+
+    /* Views */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* Nav */
+    .nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 0.5rem;
+      display: flex;
+      justify-content: space-around;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      padding: 0.75rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+      font-family: inherit;
+    }
+
+    .nav-btn.active {
+      color: var(--accent);
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-dim);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      margin-top: 0.25rem;
+    }
+
+    /* Projects */
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .project-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .project-status {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--text-dim);
+    }
+
+    .project-status.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .project-objective {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .project-tag {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Capture</div>
+    <div class="status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Loading...</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Today View -->
+    <div class="view active" id="todayView">
+      <div class="quick-capture">
+        <textarea 
+          class="capture-input" 
+          id="captureInput" 
+          placeholder="What's on your mind?"
+          rows="3"
+        ></textarea>
+        <div class="capture-types">
+          <button class="type-btn active" data-type="todo">Todo</button>
+          <button class="type-btn" data-type="note">Note</button>
+          <button class="type-btn" data-type="win">Win</button>
+          <button class="type-btn" data-type="decision">Decision</button>
+        </div>
+        <div class="capture-actions">
+          <button class="btn-primary" id="captureBtn">Capture</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value" id="todayTodoCount">0</div>
+          <div class="stat-label">Todos</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="todayNoteCount">0</div>
+          <div class="stat-label">Notes</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🔥 Today's Todos</div>
+          <div class="section-count" id="todoCountText">0 items</div>
+        </div>
+        <div id="todoList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">📝 Today's Notes</div>
+          <div class="section-count" id="noteCountText">0 items</div>
+        </div>
+        <div id="noteList"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">🎉 Wins</div>
+        </div>
+        <div id="winList"></div>
+      </div>
+    </div>
+
+    <!-- Projects View -->
+    <div class="view" id="projectsView">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Projects</div>
+        </div>
+        <div id="projectList"></div>
+      </div>
+    </div>
+
+    <!-- Weekly View -->
+    <div class="view" id="weeklyView">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">This Week</div>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value" id="weekTodoCount">0</div>
+            <div class="stat-label">Todos</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="weekWinCount">0</div>
+            <div class="stat-label">Wins</div>
+          </div>
+        </div>
+        <div id="weeklyContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" data-view="todayView">Today</button>
+    <button class="nav-btn" data-view="projectsView">Projects</button>
+    <button class="nav-btn" data-view="weeklyView">Week</button>
+  </div>
+
+  <script>
+    // Config
+    const GITHUB_REPO = 'eamongr17-code/Dexter-personal-';
+    const GITHUB_BRANCH = 'main';
+    
+    // Get token from localStorage (set during first run)
+    let GITHUB_TOKEN = localStorage.getItem('githubToken');
+
+    // State
+    let captureType = 'todo';
+    let todayData = { todos: [], notes: [], wins: [], decisions: [] };
+    let projects = [];
+    let isOnline = navigator.onLine;
+    let offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
+
+    // Token setup
+    function showTokenSetup() {
+      document.body.innerHTML = `
+        <div class="container" style="padding-top: 20vh; text-align: center;">
+          <h1 style="font-size: 2rem; margin-bottom: 1rem;">🔐 Welcome to Capture</h1>
+          <p style="color: var(--text-dim); margin-bottom: 2rem;">
+            Enter your GitHub token to connect to your data.<br>
+            <small style="opacity: 0.6;">Token is stored locally on your device.</small>
+          </p>
+          <div style="max-width: 400px; margin: 0 auto;">
+            <input type="password" id="tokenInput" placeholder="ghp_..." 
+              style="width: 100%; padding: 1rem; background: var(--surface); border: 1px solid var(--border); 
+                     border-radius: 8px; color: var(--text); font-size: 1rem; margin-bottom: 1rem;">
+            <button onclick="saveToken()" 
+              style="width: 100%; padding: 1rem; background: var(--accent); color: white; 
+                     border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">
+              Connect
+            </button>
+          </div>
+          <p style="margin-top: 2rem; font-size: 0.875rem; color: var(--text-dim);">
+            Need a token? <a href="https://github.com/settings/tokens" target="_blank" style="color: var(--accent);">Create one here</a><br>
+            <small>Required scopes: repo</small>
+          </p>
+        </div>
+      `;
+      
+      // Allow Enter key
+      setTimeout(() => {
+        const input = document.getElementById('tokenInput');
+        if (input) {
+          input.focus();
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') saveToken();
+          });
+        }
+      }, 100);
+    }
+    
+    function saveToken() {
+      const token = document.getElementById('tokenInput').value.trim();
+      if (token) {
+        localStorage.setItem('githubToken', token);
+        location.reload();
+      }
+    }
+    
+    // Make saveToken globally accessible
+    window.saveToken = saveToken;
+    
+    // GitHub API
+    async function githubRequest(path, method = 'GET', body = null) {
+      const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
+      const headers = {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json'
+      };
+
+      const options = { method, headers };
+      if (body) {
+        options.body = JSON.stringify(body);
+      }
+
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+      return response.json();
+    }
+
+    async function readFile(path) {
+      try {
+        const data = await githubRequest(path);
+        const content = atob(data.content);
+        return { content, sha: data.sha };
+      } catch (error) {
+        if (error.message.includes('404')) {
+          return { content: null, sha: null };
+        }
+        throw error;
+      }
+    }
+
+    async function writeFile(path, content, sha = null) {
+      const body = {
+        message: `Update ${path}`,
+        content: btoa(content),
+        branch: GITHUB_BRANCH
+      };
+      if (sha) {
+        body.sha = sha;
+      }
+      return githubRequest(path, 'PUT', body);
+    }
+
+    // Data Management
+    function getTodayPath() {
+      const today = new Date().toISOString().split('T')[0];
+      return `capture/${today}.json`;
+    }
+
+    async function loadTodayData() {
+      const path = getTodayPath();
+      const { content, sha } = await readFile(path);
+      
+      if (content) {
+        todayData = JSON.parse(content);
+        todayData._sha = sha;
+      } else {
+        todayData = {
+          date: new Date().toISOString().split('T')[0],
+          todos: [],
+          notes: [],
+          wins: [],
+          decisions: []
+        };
+      }
+      
+      renderToday();
+    }
+
+    async function saveTodayData() {
+      const path = getTodayPath();
+      const content = JSON.stringify(todayData, null, 2);
+      const sha = todayData._sha;
+      
+      if (isOnline) {
+        try {
+          const result = await writeFile(path, content, sha);
+          todayData._sha = result.content.sha;
+          return true;
+        } catch (error) {
+          console.error('Save failed:', error);
+          queueOfflineWrite(path, content, sha);
+          return false;
+        }
+      } else {
+        queueOfflineWrite(path, content, sha);
+        return false;
+      }
+    }
+
+    function queueOfflineWrite(path, content, sha) {
+      offlineQueue.push({ path, content, sha, timestamp: Date.now() });
+      localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+    }
+
+    async function syncOfflineQueue() {
+      if (!isOnline || offlineQueue.length === 0) return;
+
+      const queue = [...offlineQueue];
+      offlineQueue = [];
+      
+      for (const item of queue) {
+        try {
+          await writeFile(item.path, item.content, item.sha);
+        } catch (error) {
+          console.error('Sync failed for', item.path, error);
+          offlineQueue.push(item);
+        }
+      }
+      
+      localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+      updateStatus();
+    }
+
+    async function loadProjects() {
+      try {
+        const { content } = await readFile('app/data/projects.json');
+        projects = content ? JSON.parse(content) : [];
+        renderProjects();
+      } catch (error) {
+        console.error('Failed to load projects:', error);
+      }
+    }
+
+    // Capture
+    function capture() {
+      const input = document.getElementById('captureInput');
+      const text = input.value.trim();
+      
+      if (!text) return;
+
+      const item = {
+        id: Date.now(),
+        text,
+        timestamp: new Date().toISOString(),
+        completed: false
+      };
+
+      if (captureType === 'todo') {
+        item.urgency = 2; // Default medium
+        todayData.todos.push(item);
+      } else {
+        todayData[captureType + 's'].push(item);
+      }
+
+      input.value = '';
+      saveTodayData();
+      renderToday();
+
+      // Haptic feedback on mobile
+      if (navigator.vibrate) {
+        navigator.vibrate(10);
+      }
+    }
+
+    async function toggleTodo(id) {
+      const todo = todayData.todos.find(t => t.id === id);
+      if (todo) {
+        todo.completed = !todo.completed;
+        if (todo.completed) {
+          todo.completedAt = new Date().toISOString();
+        } else {
+          delete todo.completedAt;
+        }
+        await saveTodayData();
+        renderToday();
+      }
+    }
+
+    // Rendering
+    function renderToday() {
+      const incompleteTodos = todayData.todos.filter(t => !t.completed);
+      const completedTodos = todayData.todos.filter(t => t.completed);
+      const allTodos = [...incompleteTodos, ...completedTodos];
+
+      // Stats
+      document.getElementById('todayTodoCount').textContent = incompleteTodos.length;
+      document.getElementById('todayNoteCount').textContent = todayData.notes.length;
+
+      // Todos
+      const todoList = document.getElementById('todoList');
+      document.getElementById('todoCountText').textContent = `${allTodos.length} items`;
+      
+      if (allTodos.length === 0) {
+        todoList.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><p>No todos yet</p></div>';
+      } else {
+        todoList.innerHTML = allTodos.map(todo => `
+          <div class="item">
+            <div class="item-checkbox ${todo.completed ? 'checked' : ''}" 
+                 onclick="toggleTodo(${todo.id})"></div>
+            <div class="item-content">
+              <div class="item-text ${todo.completed ? 'completed' : ''}">${escapeHtml(todo.text)}</div>
+              <div class="item-meta">
+                <span class="urgency-${todo.urgency || 2}">
+                  ${todo.urgency === 3 ? '🔥 Urgent' : todo.urgency === 1 ? '📅 Low' : '⚡ Normal'}
+                </span>
+                ${todo.project ? `<span class="item-tag">${todo.project}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Notes
+      const noteList = document.getElementById('noteList');
+      document.getElementById('noteCountText').textContent = `${todayData.notes.length} items`;
+      
+      if (todayData.notes.length === 0) {
+        noteList.innerHTML = '<div class="empty"><div class="empty-icon">📝</div><p>No notes yet</p></div>';
+      } else {
+        noteList.innerHTML = todayData.notes.map(note => `
+          <div class="item">
+            <div class="item-content">
+              <div class="item-text">${escapeHtml(note.text)}</div>
+              <div class="item-meta">
+                <span>${new Date(note.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Wins
+      const winList = document.getElementById('winList');
+      if (todayData.wins.length === 0) {
+        winList.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div><p>No wins yet</p></div>';
+      } else {
+        winList.innerHTML = todayData.wins.map(win => `
+          <div class="item">
+            <div class="item-content">
+              <div class="item-text">${escapeHtml(win.text)}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function renderProjects() {
+      const projectList = document.getElementById('projectList');
+      
+      if (projects.length === 0) {
+        projectList.innerHTML = '<div class="empty"><div class="empty-icon">📁</div><p>No projects yet</p></div>';
+        return;
+      }
+
+      projectList.innerHTML = projects.map(project => `
+        <div class="project-card">
+          <div class="project-header">
+            <div class="project-name">${escapeHtml(project.name)}</div>
+            <div class="project-status ${project.status === 'In Progress' ? 'active' : ''}">${project.status}</div>
+          </div>
+          <div class="project-objective">${escapeHtml(project.objective)}</div>
+          ${project.tags ? `
+            <div class="project-tags">
+              ${project.tags.map(tag => `<span class="project-tag">${escapeHtml(tag)}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function updateStatus() {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      
+      if (isOnline) {
+        dot.classList.add('online');
+        text.textContent = offlineQueue.length > 0 ? 'Syncing...' : 'Online';
+      } else {
+        dot.classList.remove('online');
+        text.textContent = 'Offline';
+      }
+    }
+
+    // Navigation
+    function switchView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById(viewId).classList.add('active');
+      document.querySelector(`[data-view="${viewId}"]`).classList.add('active');
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check for GitHub token
+      if (!GITHUB_TOKEN) {
+        showTokenSetup();
+        return;
+      }
+      
+      // Capture type selection
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          captureType = btn.dataset.type;
+        });
+      });
+
+      // Capture button
+      document.getElementById('captureBtn').addEventListener('click', capture);
+
+      // Enter to capture
+      document.getElementById('captureInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          capture();
+        }
+      });
+
+      // Navigation
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchView(btn.dataset.view);
+        });
+      });
+
+      // Online/offline detection
+      window.addEventListener('online', () => {
+        isOnline = true;
+        updateStatus();
+        syncOfflineQueue();
+      });
+
+      window.addEventListener('offline', () => {
+        isOnline = false;
+        updateStatus();
+      });
+
+      // Load data
+      updateStatus();
+      await loadTodayData();
+      await loadProjects();
+      await syncOfflineQueue();
+    });
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        console.log('Service Worker registered');
+      }).catch(err => {
+        console.error('Service Worker registration failed:', err);
+      });
+    }
+  </script>
+</body>
+</html>
