@@ -377,6 +377,14 @@
       border-radius: 8px;
       padding: 1rem;
       margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .project-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
     }
 
     .project-header {
@@ -389,6 +397,9 @@
     .project-name {
       font-weight: 600;
       font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .project-status {
@@ -423,6 +434,17 @@
       border-radius: 4px;
       background: var(--bg);
       color: var(--text-dim);
+    }
+
+    /* Update Badge */
+    .update-badge {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s ease-in-out infinite;
+      margin-left: 0.25rem;
     }
   </style>
 </head>
@@ -532,6 +554,7 @@
     // Config
     const GITHUB_REPO = 'eamongr17-code/Dexter-personal-';
     const GITHUB_BRANCH = 'main';
+    const AUTO_ARCHIVE_DAYS = 5; // Auto-archive completed todos after 5 days
     
     // Get token from localStorage (set during first run)
     let GITHUB_TOKEN = localStorage.getItem('githubToken');
@@ -540,6 +563,7 @@
     let captureType = 'todo';
     let todayData = { todos: [], notes: [], wins: [], decisions: [] };
     let projects = [];
+    let projectCommits = {}; // Store last commit info for each project
     let isOnline = navigator.onLine;
     let offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
 
@@ -637,10 +661,64 @@
       return githubRequest(path, 'PUT', body);
     }
 
+    // Fetch last commit for a file to check recency
+    async function getFileLastCommit(path) {
+      try {
+        const url = `https://api.github.com/repos/${GITHUB_REPO}/commits?path=${path}&per_page=1`;
+        const headers = {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        };
+        const response = await fetch(url, { headers });
+        if (!response.ok) return null;
+        const commits = await response.json();
+        if (commits.length === 0) return null;
+        return {
+          date: commits[0].commit.author.date,
+          sha: commits[0].sha
+        };
+      } catch (error) {
+        console.error('Failed to fetch commit for', path, error);
+        return null;
+      }
+    }
+
+    // Check if a project was recently updated (within 3 days)
+    function isRecentlyUpdated(commitDate) {
+      if (!commitDate) return false;
+      const commitTime = new Date(commitDate).getTime();
+      const now = Date.now();
+      const threeDays = 3 * 24 * 60 * 60 * 1000;
+      return (now - commitTime) < threeDays;
+    }
+
     // Data Management
     function getTodayPath() {
       const today = new Date().toISOString().split('T')[0];
       return `capture/${today}.json`;
+    }
+
+    // Filter out old completed todos and archived notes
+    function filterActiveItems(data) {
+      const now = Date.now();
+      const fiveDaysMs = AUTO_ARCHIVE_DAYS * 24 * 60 * 60 * 1000;
+      
+      // Filter todos: hide completed items older than 5 days
+      if (data.todos) {
+        data.todos = data.todos.filter(todo => {
+          if (!todo.completed) return true; // Keep incomplete todos
+          if (!todo.completedAt) return true; // Keep if no completion date
+          const completedTime = new Date(todo.completedAt).getTime();
+          return (now - completedTime) < fiveDaysMs;
+        });
+      }
+      
+      // Filter notes: hide archived notes
+      if (data.notes) {
+        data.notes = data.notes.filter(note => !note.archived);
+      }
+      
+      return data;
     }
 
     async function loadTodayData() {
@@ -650,6 +728,7 @@
       if (content) {
         todayData = JSON.parse(content);
         todayData._sha = sha;
+        todayData = filterActiveItems(todayData);
       } else {
         todayData = {
           date: new Date().toISOString().split('T')[0],
@@ -712,6 +791,16 @@
       try {
         const { content } = await readFile('app/data/projects.json');
         projects = content ? JSON.parse(content) : [];
+        
+        // Load commit info for each project
+        for (const project of projects) {
+          const projectPath = `WORK/projects/${project.name}/README.md`;
+          const commit = await getFileLastCommit(projectPath);
+          if (commit) {
+            projectCommits[project.name] = commit;
+          }
+        }
+        
         renderProjects();
       } catch (error) {
         console.error('Failed to load projects:', error);
@@ -763,6 +852,12 @@
       }
     }
 
+    // Open project README on GitHub
+    function openProject(projectName) {
+      const url = `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/WORK/projects/${encodeURIComponent(projectName)}/README.md`;
+      window.open(url, '_blank');
+    }
+
     // Rendering
     function renderToday() {
       const incompleteTodos = todayData.todos.filter(t => !t.completed);
@@ -771,7 +866,7 @@
 
       // Stats
       document.getElementById('todayTodoCount').textContent = incompleteTodos.length;
-      document.getElementById('todayNoteCount').textContent = todayData.notes.length;
+      document.getElementById('todayNoteCount').textContent = todayData.notes.filter(n => !n.archived).length;
 
       // Todos
       const todoList = document.getElementById('todoList');
@@ -797,14 +892,15 @@
         `).join('');
       }
 
-      // Notes
+      // Notes (filter archived)
+      const activeNotes = todayData.notes.filter(n => !n.archived);
       const noteList = document.getElementById('noteList');
-      document.getElementById('noteCountText').textContent = `${todayData.notes.length} items`;
+      document.getElementById('noteCountText').textContent = `${activeNotes.length} items`;
       
-      if (todayData.notes.length === 0) {
+      if (activeNotes.length === 0) {
         noteList.innerHTML = '<div class="empty"><div class="empty-icon">📝</div><p>No notes yet</p></div>';
       } else {
-        noteList.innerHTML = todayData.notes.map(note => `
+        noteList.innerHTML = activeNotes.map(note => `
           <div class="item">
             <div class="item-content">
               <div class="item-text">${escapeHtml(note.text)}</div>
@@ -839,20 +935,28 @@
         return;
       }
 
-      projectList.innerHTML = projects.map(project => `
-        <div class="project-card">
-          <div class="project-header">
-            <div class="project-name">${escapeHtml(project.name)}</div>
-            <div class="project-status ${project.status === 'In Progress' ? 'active' : ''}">${project.status}</div>
-          </div>
-          <div class="project-objective">${escapeHtml(project.objective)}</div>
-          ${project.tags ? `
-            <div class="project-tags">
-              ${project.tags.map(tag => `<span class="project-tag">${escapeHtml(tag)}</span>`).join('')}
+      projectList.innerHTML = projects.map(project => {
+        const commit = projectCommits[project.name];
+        const showUpdateBadge = commit && isRecentlyUpdated(commit.date);
+        
+        return `
+          <div class="project-card" onclick="openProject('${escapeHtml(project.name)}')">
+            <div class="project-header">
+              <div class="project-name">
+                ${escapeHtml(project.name)}
+                ${showUpdateBadge ? '<span class="update-badge"></span>' : ''}
+              </div>
+              <div class="project-status ${project.status === 'In Progress' ? 'active' : ''}">${project.status}</div>
             </div>
-          ` : ''}
-        </div>
-      `).join('');
+            <div class="project-objective">${escapeHtml(project.objective)}</div>
+            ${project.tags ? `
+              <div class="project-tags">
+                ${project.tags.map(tag => `<span class="project-tag">${escapeHtml(tag)}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     function escapeHtml(text) {
@@ -935,6 +1039,10 @@
       await loadProjects();
       await syncOfflineQueue();
     });
+
+    // Make functions globally accessible
+    window.toggleTodo = toggleTodo;
+    window.openProject = openProject;
 
     // Service Worker Registration
     if ('serviceWorker' in navigator) {
